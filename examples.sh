@@ -10,7 +10,7 @@
 # mysql -u root -p'111' mydb
 # mysql> select * from code;
 
-while true;do echo '.';sleep 1;done &
-sleep 42
-kill $!; trap 'kill $!' SIGTERM
-echo done
+# while true;do echo '.';sleep 1;done &
+# sleep 42
+# kill $!; trap 'kill $!' SIGTERM
+# echo done

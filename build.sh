@@ -10,23 +10,26 @@ docker-compose up -d
 # import db
 importDb() {
     echo " "
-    echo "------------------------Getting _table.sql files------------------------"
+    echo " "
+    echo "------------------------ Importing sql files for $@ ------------------------"
+    echo " "
+    echo "Importing tables"
     for eachFile in $( ls ./structure/*_tables.sql ); 
         do
             echo " "
             echo "Importing $eachFile to database"
             docker exec $@ sh -c "export MYSQL_PWD=111; mysql -u root -e '$(< $eachFile)'"
-            echo "Done with $eachFile file"
+            echo "Done importing with $eachFile"
         done
     echo " "
-
-    echo "------------------------Getting _populate.sql files------------------------"
+  
+  echo "Populating tables"
     for eachFile in $( ls ./populate/*_populate.sql ); 
         do
             echo " "
             echo "Populating database with $eachFile "
             docker exec $@ sh -c "export MYSQL_PWD=111; mysql -u root -e '$(< $eachFile)'"
-            echo "Done with $eachFile file"
+            echo "Done populating with $eachFile"
         done
     echo " "
 
@@ -37,32 +40,38 @@ docker-ip() {
 }
 
 init_replication() {
-  echo "-------------------- Waiting for mysql servers -----------------------"
+  echo "------------------------ Waiting for mysql servers ------------------------"
 
   echo " "
-  echo "---------------------- mysql_master ------------------------"
+  echo "------------------------ mysql_master ------------------------"
 
-  until docker exec mysql_master sh -c 'export MYSQL_PWD=111; mysql -u root -e ";"'
-  do
-      echo "Waiting for mysql_master database connection..."
-      sleep 4
-  done
 
-  echo " "
-  echo "--------------------- Server mysql_slave -----------------------"
-  until docker-compose exec mysql_slave sh -c 'export MYSQL_PWD=111; mysql -u root -e ";"'
+  until docker exec mysql_master sh -c 'export MYSQL_PWD=111; mysql -u root -e ";"' 2>/dev/null;
   do
-      echo "Waiting for mysql_slave database connection..."
-      sleep 4
+    echo "MySQL is unavailable - waiting for it..."
+    sleep 4
   done
+  echo "mysql_master is up"
 
   echo " "
-  echo "--------------------- Server mysql_slave -----------------------"
-  until docker-compose exec mysql_slave2 sh -c 'export MYSQL_PWD=111; mysql -u root -e ";"'
+  echo "------------------------ Server mysql_slave ------------------------"
+
+  until docker exec mysql_slave sh -c 'export MYSQL_PWD=111; mysql -u root -e ";"' 2>/dev/null;
   do
-      echo "Waiting for mysql_slave2 database connection..."
-      sleep 4
+    echo "MySQL is unavailable - waiting for it..."
+    sleep 4
+  done 
+  echo "mysql_slave is up"
+
+  echo " "
+  echo "------------------------ Server mysql_slave2 ------------------------"
+
+  until docker exec mysql_slave2 sh -c 'export MYSQL_PWD=111; mysql -u root -e ";"' 2>/dev/null;
+  do
+    echo "MySQL is unavailable - waiting for it..."
+    sleep 4
   done
+  echo "mysql_slave2 is up"
 
   echo " "
   echo "--------------------- Servers are ready -----------------------"
